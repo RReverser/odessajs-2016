@@ -21,13 +21,20 @@
 		throw 'The reveal.js Markdown plugin requires marked to be loaded';
 	}
 
-	if( typeof hljs !== 'undefined' ) {
-		marked.setOptions({
-			highlight: function( lang, code ) {
-				return hljs.highlightAuto( lang, code ).value;
-			}
-		});
-	}
+    var renderer = new marked.Renderer();
+
+    var defaultCode = renderer.code;
+
+    renderer.code = function ( code, lang ) {
+        var match = lang.match(/^graph-(LR|TB|TD|BT|RL)$/i);
+        if ( match ) {
+            return '<div class="mermaid">graph ' + match[1].toUpperCase() + '\n' + code + '</div>';
+        }
+        if ( lang === 'text' ) {
+            return '<pre><code class="hljs nohighlight">' + code.replace(/</g, '&lt;') + '</code></pre>';
+        }
+        return defaultCode.apply(this, arguments);
+    };
 
 	var DEFAULT_SLIDE_SEPARATOR = '^\r?\n---\r?\n$',
 		DEFAULT_NOTES_SEPARATOR = 'note:',
@@ -120,7 +127,7 @@
 		var notesMatch = content.split( new RegExp( options.notesSeparator, 'mgi' ) );
 
 		if( notesMatch.length === 2 ) {
-			content = notesMatch[0] + '<aside class="notes">' + marked(notesMatch[1].trim()) + '</aside>';
+			content = notesMatch[0] + '<aside class="notes">' + marked(notesMatch[1].trim(), { renderer: renderer }) + '</aside>';
 		}
 
 		// prevent script end tags in the content from interfering
@@ -367,7 +374,7 @@
 				var notes = section.querySelector( 'aside.notes' );
 				var markdown = getMarkdownFromSlide( section );
 
-				section.innerHTML = marked( markdown );
+				section.innerHTML = marked( markdown, { renderer: renderer } );
 				addAttributes( 	section, section, null, section.getAttribute( 'data-element-attributes' ) ||
 								section.parentNode.getAttribute( 'data-element-attributes' ) ||
 								DEFAULT_ELEMENT_ATTRIBUTES_SEPARATOR,
