@@ -1,5 +1,5 @@
 ## A talk about
-#### VM, IR, AST, CFG, SSA, VDG, DCE, LICM, GCM, GVN, JSC, LLVM, ASM...
+#### VM, IR, AST, CFG, SSA, VDG, CPS, DCE, LICM, GCM, GVN, JSC (DFG, FTL), LLVM, ASM...
 ### or
 ## Intro to the Optimizing Compilers
 
@@ -411,21 +411,21 @@ Program-->ForStatement
 
 ForStatement-->UpdateExpression
 
-subgraph 
+subgraph
 UpdateExpression["UpdateExpression('++')"]
 UpdateExpression-->Id3["Identifier('i')"]
 end
 
 ForStatement-->BinaryExpression["BinaryExpression('<')"]
 
-subgraph 
+subgraph
 BinaryExpression-->Id2["Identifier('i')"]
 BinaryExpression-->Lit10["Literal(10)"]
 end
 
 ForStatement-->VariableDeclaration["VariableDeclaration('var')"]
 
-subgraph 
+subgraph
 VariableDeclaration-->VariableDeclarator
 VariableDeclarator-->Id1["Identifier('i')"]
 VariableDeclarator-->Lit0["Literal(0)"]
@@ -447,21 +447,21 @@ Program-.->ForStatement
 
 ForStatement-.->UpdateExpression
 
-subgraph 
+subgraph
 UpdateExpression["UpdateExpression('++')"]
 UpdateExpression-.->Id3["Identifier('i')"]
 end
 
 ForStatement-.->BinaryExpression["BinaryExpression('<')"]
 
-subgraph 
+subgraph
 BinaryExpression-.->Id2["Identifier('i')"]
 BinaryExpression-.->Lit10["Literal(10)"]
 end
 
 ForStatement-.->VariableDeclaration["VariableDeclaration('var')"]
 
-subgraph 
+subgraph
 VariableDeclaration-.->VariableDeclarator
 VariableDeclarator-.->Id1["Identifier('i')"]
 VariableDeclarator-.->Lit0["Literal(0)"]
@@ -484,18 +484,18 @@ for (var i = 0; i < 10; i++) {
 ```
 
 ```graph-lr
-subgraph 
+subgraph
 UpdateExpression["UpdateExpression('++')"]
 UpdateExpression-.->Id3["Identifier('i')"]
 end
 
-subgraph 
+subgraph
 BinaryExpression["BinaryExpression('<')"]
 BinaryExpression-.->Id2["Identifier('i')"]
 BinaryExpression-.->Lit10["Literal(10)"]
 end
 
-subgraph 
+subgraph
 VariableDeclaration["VariableDeclaration('var')"]
 VariableDeclaration-.->VariableDeclarator
 VariableDeclarator-.->Id1["Identifier('i')"]
@@ -519,18 +519,18 @@ for (var i = 0; i < 10; i++) {
 ```
 
 ```graph-lr
-subgraph 
+subgraph
 UpdateExpression["UpdateExpression('++')"]
 UpdateExpression-.->Id3["Identifier('i')"]
 end
 
-subgraph 
+subgraph
 BinaryExpression["BinaryExpression('<')"]
 BinaryExpression-.->Id2["Identifier('i')"]
 BinaryExpression-.->Lit10["Literal(10)"]
 end
 
-subgraph 
+subgraph
 t1["t1 = Store('i', 0)"]
 end
 
@@ -550,18 +550,18 @@ for (var i = 0; i < 10; i++) {
 ```
 
 ```graph-lr
-subgraph 
+subgraph
 UpdateExpression["UpdateExpression('++')"]
 UpdateExpression-.->Id3["Identifier('i')"]
 end
 
-subgraph 
+subgraph
 t2["t2 = Load('i')"]-->t3
 t3["t3 = IsLessThan(t2, 10)"]-->t4
 t4{"t4 = Branch(t3)"}
 end
 
-subgraph 
+subgraph
 t1["t1 = Store('i', 0)"]-->t2
 end
 
@@ -582,19 +582,19 @@ for (var i = 0; i < 10; i++) {
 ```
 
 ```graph-lr
-subgraph 
+subgraph
 t5["t5 = Load('i')"]-->t6
 t6["t6 = Add(t5, 1)"]-->t7
 t7["t7 = Store('i', t6)"]
 end
 
-subgraph 
+subgraph
 t2["t2 = Load('i')"]-->t3
 t3["t3 = IsLessThan(t3, 10)"]-->t4
 t4{"t4 = Branch(t3)"}
 end
 
-subgraph 
+subgraph
 t1["t1 = Store('i', 0)"]-->t2
 end
 
@@ -615,17 +615,17 @@ for (var i = 0; i < 10; i++) {
 ```
 
 ```graph-lr
-subgraph 
+subgraph
 t5["t5 = Add(t2, 1)"]
 end
 
-subgraph 
+subgraph
 t2["t2 = Load('i')"]-->t3
 t3["t3 = IsLessThan(t3, 10)"]-->t4
 t4{"t4 = Branch(t3)"}
 end
 
-subgraph 
+subgraph
 t1["t1 = 0"]-->t2
 end
 
@@ -646,17 +646,17 @@ for (var i = 0; i < 10; i++) {
 ```
 
 ```graph-lr
-subgraph 
+subgraph
 t5["t5 = Add(t2, 1)"]
 end
 
-subgraph 
+subgraph
 t2["t2 = Phi(t1, t5)"]-->t3
 t3["t3 = IsLessThan(t3, 10)"]-->t4
 t4{"t4 = Branch(t3)"}
 end
 
-subgraph 
+subgraph
 t1["t1 = 0"]-->t2
 end
 
@@ -677,11 +677,11 @@ for (var i = 0; i < a.length; i++) {
 ```
 
 ```graph-lr
-subgraph 
+subgraph
 t7["t7 = Add(t2, 1)"]
 end
 
-subgraph 
+subgraph
 t2["t2 = Phi(t1, t5)"]-->t3
 t3["t3 = Load('a')"]-->t4
 t4["t4 = LoadProperty(t3, 'length')"]-->t5
@@ -689,7 +689,7 @@ t5["t5 = IsLessThan(t2, t4)"]-->t6
 t6{"t6 = Branch(t5)"}
 end
 
-subgraph 
+subgraph
 t1["t1 = 0"]-->t2
 end
 
@@ -710,11 +710,11 @@ for (var i = 0; i < a.length; i++) {
 ```
 
 ```graph-lr
-subgraph 
+subgraph
 t7["t7 = Add(t2, 1)"]
 end
 
-subgraph 
+subgraph
 t2["t2 = Phi(t1, t5)"]-.->t3
 t2==>t5
 t3["t3 = Load('a')"]==>t4
@@ -723,7 +723,7 @@ t5["t5 = IsLessThan(t2, t4)"]==>t6
 t6{"t6 = Branch(t5)"}
 end
 
-subgraph 
+subgraph
 t1["t1 = 0"]==>t2
 end
 
@@ -744,25 +744,25 @@ for (var i = 0; i < a.length; i++) {
 ```
 
 ```graph-lr
-subgraph 
+subgraph
 t7["t7 = Add(t2, 1)"]
 end
 
-subgraph 
+subgraph
 t2["t2 = Phi(t1, t5)"]
 t2==>t5
 t5["t5 = IsLessThan(t2, t4)"]==>t6
 t6{"t6 = Branch(t5)"}
 end
 
-subgraph 
+subgraph
 t3["t3 = Load('a')"]==>t4
 t4["t4 = LoadProperty(t3, 'length')"]==>t5
 end
 
 t2-.->t3
 
-subgraph 
+subgraph
 t1["t1 = 0"]==>t2
 end
 
@@ -783,17 +783,17 @@ for (var i = 0; i < a.length; i++) {
 ```
 
 ```graph-lr
-subgraph 
+subgraph
 t7["t7 = Add(t4, 1)"]
 end
 
-subgraph 
+subgraph
 t4["t4 = Phi(t1, t7)"]==>t5
 t5["t5 = IsLessThan(t4, t3)"]==>t6
 t6{"t6 = Branch(t5)"}
 end
 
-subgraph 
+subgraph
 t1["t1 = 0"]
 t1-.->t2
 t2["t2 = Load('a')"]==>t3
@@ -822,17 +822,17 @@ function benchmark() {
 ```
 
 ```graph-lr
-subgraph 
+subgraph
 t7["t7 = Add(t4, 1)"]
 end
 
-subgraph 
+subgraph
 t4["t4 = Phi(t1, t7)"]==>t5
 t5["t5 = IsLessThan(t4, t3)"]==>t6
 t6{"t6 = Branch(t5)"}
 end
 
-subgraph 
+subgraph
 t1["t1 = 0"]
 t1-.->t2
 t2["t2 = Load('a')"]==>t3
@@ -861,17 +861,17 @@ function benchmark() {
 ```
 
 ```graph-lr
-subgraph 
+subgraph
 t7["t7 = Add(t4, 1)"]
 end
 
-subgraph 
+subgraph
 t4["t4 = Phi(t1, t7)"]==>t5
 t5["t5 = IsLessThan(t4, t3)"]==>t6
 t6{"t6 = Branch(t5)"}
 end
 
-subgraph 
+subgraph
 t1["t1 = 0"]
 t2["t2 = Load('a')"]==>t3
 t3["t3 = LoadProperty(t2, 'length')"]
@@ -1309,7 +1309,7 @@ IONFLAGS="bailouts,bl-bails" ./dist/bin/js temp.js
  8: for (var i = 0; i < n; i++) {
  9:     add(x, y);
 10: }
-11: 
+11:
 12: add(x, {});
 ...
 ```
@@ -1367,7 +1367,7 @@ https://developers.google.com/v8/build
 ```graph-td
 Source-->Preparser["Preparser<br>(syntax errors and offsets)"]
 
-subgraph 
+subgraph
 Preparser-->Parser["Function parser (AST)"]
 Parser-->FullCodegen["Full-Codegen<br>(generic native code with IC)"]
 FullCodegen-->exec["(execution)"]
@@ -1382,12 +1382,12 @@ end
 ```graph-td
 Source==>Preparser["Preparser<br>(errors and positions)"]
 
-subgraph 
+subgraph
 Hydrogen["Hydrogen (CFG + SSA)"]==>Lithium["Lithium (Low-level IR)"]
 Lithium==>native2["(optimized native code with Bailouts)"]
 end
 
-subgraph 
+subgraph
 Parser["Function parser (AST)"]
 FullCodegen["Full-Codegen<br>(Generic native code with IC)"]
 end
@@ -1520,7 +1520,7 @@ node --trace-deopt temp.js
  8: for (var i = 0; i < n; i++) {
  9:     add(x, y);
 10: }
-11: 
+11:
 12: add(x, {});
 ...
 ```
@@ -1554,6 +1554,12 @@ Spews `code.asm` and `hydrogen-123-456.cfg` in current folder.
 
 <img alt="Screenshot of IRHydra" src="img/Screen Shot 2016-06-24 at 19.56.54.png" />
 
+---
+
+## V8: The Future (?)
+
+<img alt="V8 pipeline" src="img/v8-turbofan.jpg" />
+
 ===
 
 # JavaScriptCore
@@ -1562,8 +1568,167 @@ http://trac.webkit.org/wiki/JavaScriptCore
 
 ---
 
+## JSC: Three-tier model
 
+<img alt="JSC three-tier pipeline" src="img/jsc1.png" />
+
+---
+
+## JSC: Data-flow graph (DFG) JIT
+
+<img alt="JSC DFG in three-tier pipeline" src="img/jsc-dfg.png" />
+
+---
+
+## JSC: Benchmarks (three-tier)
+
+<img alt="JSC benchmarks in three-tier pipeline" src="img/jsc-three-tier.png" />
+
+---
+
+## JSC: Faster-than-light (FTL) JIT
+
+<img alt="JSC faster-than-light pipeline" src="img/jsc-dfg-2.png" />
+
+---
+
+## JSC: Four-tier model
+
+<img alt="JSC four-tier pipeline" src="img/jsc2.png" />
+
+---
+
+## JSC: Benchmarks (four-tier)
+
+<img alt="JSC benchmarks in four-tier pipeline" src="img/jsc-four-tier.png" />
+
+---
+
+## JSC: Dumps
+
+```bash
+./jsc --options
+```
+
+```text
+...
+dumpSourceAtDFGTime=false   ... dumps source code of JS function being DFG compiled
+dumpBytecodeAtDFGTime=false   ... dumps bytecode of JS function being DFG compiled
+dumpGraphAfterParsing=false
+dumpGraphAtEachPhase=false
+dumpDFGGraphAtEachPhase=false   ... dumps the DFG graph at each phase DFG of complitaion (note this excludes DFG graphs during FTL compilation)
+dumpDFGFTLGraphAtEachPhase=false   ... dumps the DFG graph at each phase DFG of complitaion when compiling FTL code
+...
+```
+
+---
+
+## JSC: CFG + SSA
+
+```bash
+./jsc --dumpGraphAfterParsing=true
+```
+
+```text
+Block #0 (bc#0): (OSR target)
+  Execution count: 1.000000
+  Predecessors:
+  Successors:
+  States: StructuresAreWatched, CurrentlyCFAUnreachable
+  Vars Before: <empty>
+  Intersected Vars Before: arg2:(DoubleimpurenanTopEmpty, TOP, TOP) arg1:(DoubleimpurenanTopEmpty, TOP, TOP) arg0:(DoubleimpurenanTopEmpty, TOP, TOP) loc0:(DoubleimpurenanTopEmty, TOP, TOP) loc1:(DoubleimpurenanTopEmpty, TOP, TOP) loc2:(DoubleimpurenanTopEmpty, TOP, TOP) loc3:(DoubleimpurenanTopEmpty, TOP, TOP)
+  Var Links:
+   0:< 1:->     SetArgument(this(a), W:SideState, bc#0)  predicting None
+   1:< 1:->     SetArgument(arg1(B~/FlushedJSValue), W:SideState, bc#0)  predicting None
+   2:< 1:->     SetArgument(arg2(C~/FlushedJSValue), W:SideState, bc#0)  predicting None
+   3:< 1:->     JSConstant(JS|PureInt, Undefined, bc#0)
+   4:<!0:->     MovHint(Check:Untyped:@3, MustGen, loc0, W:SideState, ClobbersExit, bc#0)
+   5:< 1:->     SetLocal(Check:Untyped:@3, loc0(D~/FlushedJSValue), W:Stack(-1), bc#0, ExitInvalid)  predicting None
+   6:<!0:->     MovHint(Check:Untyped:@3, MustGen, loc1, W:SideState, ClobbersExit, bc#0, ExitInvalid)
+   7:< 1:->     SetLocal(Check:Untyped:@3, loc1(E~/FlushedJSValue), W:Stack(-2), bc#0, ExitInvalid)  predicting None
+   8:<!0:->     MovHint(Check:Untyped:@3, MustGen, loc2, W:SideState, ClobbersExit, bc#0, ExitInvalid)
+   9:< 1:->     SetLocal(Check:Untyped:@3, loc2(F~/FlushedJSValue), W:Stack(-3), bc#0, ExitInvalid)  predicting None
+  10:< 1:->     JSConstant(JS|PureInt, Weak:Cell: 01441BE0 (%CW:Function), bc#1)
+  11:< 1:->     JSConstant(JS|PureInt, Weak:Cell: 0145FFC0 (%BL:JSGlobalLexicalEnvironment), bc#1)
+  12:<!0:->     MovHint(Check:Untyped:@11, MustGen, loc0, W:SideState, ClobbersExit, bc#1)
+  13:< 1:->     SetLocal(Check:Untyped:@11, loc0(G~/FlushedJSValue), W:Stack(-1), bc#1, exit: bc#3)  predicting None
+  14:<!0:->     MovHint(Check:Untyped:@11, MustGen, loc1, W:SideState, ClobbersExit, bc#3)
+  15:< 1:->     SetLocal(Check:Untyped:@11, loc1(H~/FlushedJSValue), W:Stack(-2), bc#3, exit: bc#6)  predicting None
+  16:<!0:->     GetLocal(JS|MustGen|PureInt, arg1(B~/FlushedJSValue), R:Stack(5), bc#6)  predicting None
+  17:<!0:->     GetLocal(JS|MustGen|PureInt, arg2(C~/FlushedJSValue), R:Stack(6), bc#6)  predicting None
+  18:<!0:->     ValueAdd(Check:Untyped:@16, Check:Untyped:@17, JS|MustGen|PureInt, R:World, W:Heap, Exits, ClobbersExit, bc#6)
+  19:<!0:->     MovHint(Check:Untyped:@18, MustGen, loc3, W:SideState, ClobbersExit, bc#6, ExitInvalid)
+  20:< 1:->     SetLocal(Check:Untyped:@18, loc3(I~/FlushedJSValue), W:Stack(-4), bc#6, exit: bc#11)  predicting None
+  21:<!0:->     Return(Check:Untyped:@18, MustGen, W:SideState, Exits, bc#11)
+  22:<!0:->     Flush(MustGen, arg2(C~/FlushedJSValue), R:Stack(6), W:SideState, bc#11)  predicting None
+  23:<!0:->     Flush(MustGen, arg1(B~/FlushedJSValue), R:Stack(5), W:SideState, bc#11)  predicting None
+```
 
 ===
 
-# Chakra
+# ChakraCore
+
+<img alt="ChakraCore pipeline" src="img/chakracore_pipeline.png" height="460" />
+
+---
+
+## ChakraCore: Bailouts
+
+```javascript
+'use strict';
+
+function abs(x) {
+    if (x >= 0) {
+        return x;
+    } else {
+        return -x;
+    }
+}
+
+for (var i = 0; i < 100000; i++) {
+    abs(10);
+}
+
+abs('10');
+```
+
+```bash
+./ch -Trace:Bailout temp.js
+```
+
+```text
+BailOut: function: abs ( (#1.1), #2) offset: #0000 Opcode: FromVar Kind: BailOutIntOnly
+```
+
+---
+
+## ChakraCore: CFG + SSA
+
+```bash
+./ch -Dump:FGBuild temp.js
+```
+
+```text
+-----------------------------------------------------------------------------
+************   IR after FGBuild (FullJit)  ************
+-----------------------------------------------------------------------------
+Function abs ( (#1.1), #2)                        Instr Count:21
+
+                       FunctionEntry                                          #
+...
+BLOCK 2: In(0) Out(3)
+
+$L3:                                                                          #0011
+
+
+  Line   7: return -x;
+  Col    9: ^
+                       StatementBoundary  #2                                  #0011
+    s0.var          =  Neg_A          s3.var                                  #0011
+                       Br             $L1                                     #0014
+...
+```
+
+===
+
+# AreWeFastYet? (.com)
