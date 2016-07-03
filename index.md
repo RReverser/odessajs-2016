@@ -1,7 +1,13 @@
 ## A talk about
-#### VM, IR, AST, CFG, SSA, VDG, CPS, DCE, LICM, GCM, GVN, JSC (DFG, FTL), LLVM, ASM...
+#### VM, IR (AST, CFG, SSA, VDG, CPS), DCE, LICM, GCM, GVN, JSC (DFG, FTL), LLVM...
 ### or
 ## Intro to the Optimizing Compilers
+
+----
+
+#### Ingvar Stepanyan ([@RReverser](https://twitter.com/RReverser))
+#### JavaScript Performance Engineer
+#### CloudFlare
 
 ===
 
@@ -483,7 +489,7 @@ for (var i = 0; i < 10; i++) {
 }
 ```
 
-```graph-lr
+```graph-td
 subgraph
 UpdateExpression["UpdateExpression('++')"]
 UpdateExpression-.->Id3["Identifier('i')"]
@@ -1007,20 +1013,12 @@ t3==>t4
 
 # Engines
 
-```javascript
-'use strict';
-
-function add(x, y) {
-    return x + y;
-}
-
-function test(n, x, y) {
-    for (var i = 0; i < n; i++) {
-        add(x, y);
-    }
-}
-
-test(1e7, 10, 20);
+```graph-lr
+Parser-->Interpreter
+Interpreter-->JIT1["Simple JIT"]
+JIT1-->JIT2["Optimizational JIT"]
+JIT2-.->JIT1
+JIT1-.->Interpreter
 ```
 
 ===
@@ -1136,6 +1134,12 @@ runtime = 331.680 ms
 
 ## SpiderMonkey: TraceMonkey (2009, Mozilla)
 
+<img alt="Tracing machine" src="img/tracing.jpg" />
+
+---
+
+## SpiderMonkey: TraceMonkey
+
 ```javascript
 function test(n, x, y) {
     for (var i = 0; i < n; i++) {
@@ -1166,12 +1170,6 @@ function test(n, x, y) {
 
 ## SpiderMonkey: TraceMonkey
 
-<img alt="Tracing machine" src="img/tracing.jpg" />
-
----
-
-## SpiderMonkey: TraceMonkey
-
 <img alt="TraceMonkey vs interpreter" src="img/tracingmonkey0014.jpg" width="800" />
 
 <!--![TraceMonkey vs interpreter](http://blog.mozilla.org/hacks/files/2009/07/complexity.png)-->
@@ -1197,13 +1195,49 @@ function test(n, x, y) {
 ---
 
 ## SpiderMonkey
-### (...just skipping few years here...)
 
-JägerMonkey + generic Type Inference (2011) > TraceMonkey (dropping&nbsp;TM)
+JägerMonkey + generic Type Inference (2011)
+
+~~TraceMonkey~~
+
+---
+
+## SpiderMonkey: Baseline
 
 Baseline (2013) = Interpreter + Inline Caches
 
-Baseline > JägerMonkey (simpler and collects more info; dropping&nbsp;JM)
+```javascript
+document.getElementById
+```
+
+```graph-lr
+document-->hasGetElementById{"is cached?"}
+hasGetElementById-->cached["cachedOffset"]
+hasGetElementById-->g
+g-->e
+e-->t
+t-->E
+E-->l
+l-->e2["e"]
+e2-->m
+m-->e3["e"]
+e3-->n
+n-->t2["t"]
+t2-->B
+B-->y
+y-->I
+I-->d
+d-->cached
+cached-->value["getValue()"]
+```
+
+---
+
+## SpiderMonkey
+
+Baseline
+
+~~JägerMonkey~~
 
 <img alt="JIT cycle" src="img/jit-diagram.png" />
 
@@ -1675,8 +1709,28 @@ Block #0 (bc#0): (OSR target)
 ## ChakraCore: Bailouts
 
 ```javascript
-'use strict';
+function add(x, y) {
+    return x + y;
+}
 
+for (var i = 0; i < 1000000; i++) {
+    add(10, 20);
+}
+
+add(10, {});
+```
+
+```bash
+./ch -Trace:Bailout temp.js
+```
+
+<pre style="font-style: italic">(this space is intentionally left blank)</pre>
+
+---
+
+## ChakraCore: Bailouts
+
+```javascript
 function abs(x) {
     if (x >= 0) {
         return x;
@@ -1719,8 +1773,6 @@ Function abs ( (#1.1), #2)                        Instr Count:21
 BLOCK 2: In(0) Out(3)
 
 $L3:                                                                          #0011
-
-
   Line   7: return -x;
   Col    9: ^
                        StatementBoundary  #2                                  #0011
@@ -1732,3 +1784,9 @@ $L3:                                                                          #0
 ===
 
 # AreWeFastYet? (.com)
+
+===
+
+# Yaaay, we did it!..
+
+## P.S. I didn't cover much, but :)
